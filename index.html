@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout | JeremyWorld</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #202020;
+            --bg-medium: #303030;
+            --text-light: #f0f0f0;
+            --text-medium: #b0b0b0;
+            --accent-red: #ff4444;
+            --accent-red-dark: #cc0000;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .logout-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 2rem;
+            background: var(--bg-medium);
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        p {
+            color: var(--text-medium);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .btn-logout {
+            background: var(--accent-red);
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-logout:hover {
+            background: var(--accent-red-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-medium);
+            border: 1px solid var(--text-medium);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+        }
+
+        #debug-info {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: var(--border-radius);
+            font-family: monospace;
+            font-size: 0.8rem;
+            text-align: left;
+            display: none;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <div class="logout-container">
+        <h1>Are you sure you want to log out?</h1>
+        <p>You'll need to sign in again to access JeremyWorld.</p>
+        <button id="confirm-logout" class="btn btn-logout">YES!!!! LOG ME OUT</button>
+        <button id="cancel-logout" class="btn btn-cancel">Cancel</button>
+        
+        <div id="debug-info">
+            <h3>Debug Information:</h3>
+            <div id="cookie-status"></div>
+            <div id="auth-status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyPk7d26WwhHM34MVbSHBMrnfSTtT213Y",
+            authDomain: "jeremyworld-auth.firebaseapp.com",
+            projectId: "jeremyworld-auth",
+            storageBucket: "jeremyworld-auth.appspot.com",
+            messagingSenderId: "830728575641",
+            appId: "1:830728575641:web:3d22b3b15127f0ae93f608"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // DOM Elements
+        const confirmLogoutBtn = document.getElementById('confirm-logout');
+        const cancelLogoutBtn = document.getElementById('cancel-logout');
+        const debugInfo = document.getElementById('debug-info');
+        const cookieStatus = document.getElementById('cookie-status');
+        const authStatus = document.getElementById('auth-status');
+
+        // Enable debug mode with ?debug=true in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const debugMode = urlParams.has('debug');
+
+        if (debugMode) {
+            debugInfo.style.display = 'block';
+            updateDebugInfo();
+        }
+
+        function updateDebugInfo() {
+            // Show current cookie status
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('jeremyworld-auth='))
+                ?.split('=')[1];
+            
+            cookieStatus.innerHTML = `<strong>Cookie Status:</strong> ${cookieValue ? 'Found (' + cookieValue + ')' : 'Not found'}`;
+            
+            // Show auth status
+            auth.onAuthStateChanged((user) => {
+                authStatus.innerHTML = `<strong>Auth Status:</strong> ${user ? 'Logged in (' + user.email + ')' : 'Not logged in'}`;
+            });
+        }
+
+        // Comprehensive cookie clearing function
+        function clearAuthCookie() {
+            // Clear cookie with all possible variations
+            const domains = [
+                '.jeremyworld.org',
+                'jeremyworld.org',
+                'login.jeremyworld.org',
+                'logout.jeremyworld.org'
+            ];
+            
+            const paths = ['/', ''];
+            
+            domains.forEach(domain => {
+                paths.forEach(path => {
+                    document.cookie = `jeremyworld-auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=${domain}; path=${path}`;
+                    document.cookie = `jeremyworld-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=${domain}; path=${path}`;
+                });
+            });
+            
+            if (debugMode) {
+                console.log("Attempted to clear cookies for all domains and paths");
+                updateDebugInfo();
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                if (debugMode) console.log("Starting logout process...");
+                
+                // Sign out from Firebase
+                await auth.signOut();
+                if (debugMode) console.log("Firebase signout successful");
+                
+                // Clear all possible cookie variations
+                clearAuthCookie();
+                if (debugMode) console.log("Cookie clearing attempted");
+                
+                // Force reload to ensure cookie is gone
+                if (debugMode) {
+                    alert("Logout process complete. Check console for details.");
+                    updateDebugInfo();
+                } else {
+                    // Redirect to login page
+                    window.location.href = 'https://login.jeremyworld.org';
+                }
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Logout failed. Please try again.');
+            }
+        }
+
+        // Event listeners
+        confirmLogoutBtn.addEventListener('click', logout);
+        
+        cancelLogoutBtn.addEventListener('click', () => {
+            window.location.href = 'https://jeremyworld.org';
+        });
+
+        // Initial check
+        auth.onAuthStateChanged((user) => {
+            if (!user && !debugMode) {
+                // If no user is logged in, clear cookies and redirect
+                clearAuthCookie();
+                window.location.href = 'https://login.jeremyworld.org';
+            }
+        });
+    </script>
+</body>
+</html>
